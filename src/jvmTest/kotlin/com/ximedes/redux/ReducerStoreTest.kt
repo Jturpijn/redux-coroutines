@@ -1,15 +1,15 @@
-package redux_coroutines
+package com.ximedes.redux
 
 import org.junit.Test
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
 import kotlin.test.assertEquals
 
-class StoreTestsJvm {
-    private val store = ReducerStore(reducer, State())
+
+class ReducerStoreTest {
+
+    private val store = ReducerStore(reducer, CounterState())
 
     @Test
-    fun `Testing the initial getState`() = assertEquals(State(), store.getState())
+    fun `Testing the initial getState`() = assertEquals(CounterState(), store.getState())
 
     @Test
     fun `Testing dispatching an Increment`() {
@@ -19,7 +19,7 @@ class StoreTestsJvm {
 
     @Test
     fun `Testing 1000 dispatches of Increment`() {
-        for(i in 0..1000) {
+        for (i in 0..1000) {
             store.dispatch(Increment)
         }
         assertEquals(1000, store.getState().counter)
@@ -27,7 +27,7 @@ class StoreTestsJvm {
 
     @Test
     fun `Testing dispatching a Decrement`() {
-        store.dispatch(Increment) ; store.dispatch(Decrement)
+        store.dispatch(Increment); store.dispatch(Decrement)
         assertEquals(0, store.getState().counter)
     }
 }
