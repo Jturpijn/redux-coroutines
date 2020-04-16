@@ -12,5 +12,3 @@ val CounterReducer = { s: CounterState, a: CounterAction ->
         is Decrement -> CounterState(s.counter - 1)
     }
 }
-
-var counterStore = ReducerStore(CounterReducer, CounterState())
