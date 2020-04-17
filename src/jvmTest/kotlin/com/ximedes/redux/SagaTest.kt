@@ -17,6 +17,25 @@ fun main() {
         }
     }
 
+    container.runSaga {
+        val b = take { action -> action == Increment }
+        println(
+            when (b) {
+                is Increment -> "Succes"
+                else -> "Failed"
+            }
+        )
+
+    }
+
+    container.runSaga {
+        val c = takeEvery { action -> action == Increment }
+        c
+    }
+
+    store.dispatch(Decrement)
+    Thread.sleep(1000)
     store.dispatch(Increment)
-    Thread.sleep(100)
+    store.dispatch(Increment)
+    Thread.sleep(2000)
 }
