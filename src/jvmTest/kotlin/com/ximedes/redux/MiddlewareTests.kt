@@ -2,9 +2,6 @@ package com.ximedes.redux
 
 import org.junit.Before
 import org.junit.Test
-import org.junit.jupiter.api.BeforeEach
-import org.w3c.dom.css.Counter
-import java.lang.Exception
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -15,7 +12,8 @@ val LOGGER: Middleware<CounterState, CounterAction> = { store, action, next ->
 }
 
 class MiddlewareTests {
-    private val logStore = apply(counterStore, LOGGER)
+    private val logStore = applyMiddleware(counterStore, LOGGER)
+
     @Before
     fun initStore() {
         counterStore = ReducerStore(CounterReducer, CounterState(counter = 0))
@@ -41,7 +39,7 @@ class MiddlewareTests {
                 throw Exception("Cannot be a negative")
             }
         }
-        val excStore = apply(counterStore, exception)
+        val excStore = applyMiddleware(counterStore, exception)
         assertFailsWith<Exception> { excStore.dispatch(Decrement) }
     }
 }
