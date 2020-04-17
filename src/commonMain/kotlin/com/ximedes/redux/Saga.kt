@@ -8,11 +8,14 @@ import kotlinx.coroutines.launch
 
 
 interface SagaRuntime<S, A> {
+
     suspend fun take(): A
 
     // suspend fun take(matcher: (A) -> Boolean): A
 
     // suspend fun takeEvery(...)
+
+    // suspend (?) fun select()
 }
 
 typealias Saga<S, A> = suspend SagaRuntime<S, A>.() -> Unit
@@ -40,7 +43,6 @@ class SagaContainer<S, A> : CoroutineScope, SagaRuntime<S, A> {
         receiveChannel.cancel()
         return action
     }
-
 
 }
 

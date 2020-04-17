@@ -18,9 +18,5 @@ fun main() {
     }
 
     store.dispatch(Increment)
-    store.dispatch(Decrement)
-    store.dispatch(Increment)
-    Thread.sleep(1000)
-
-
+    Thread.sleep(100)
 }
