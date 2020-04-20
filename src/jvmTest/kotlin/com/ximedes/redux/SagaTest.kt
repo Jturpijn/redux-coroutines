@@ -21,7 +21,7 @@ fun main() {
         val b = take { action -> action == Increment }
         println(
             when (b) {
-                is Increment -> "Succes"
+                is Increment -> "Succesfully consumed Increment"
                 else -> "Failed"
             }
         )
@@ -29,8 +29,7 @@ fun main() {
     }
 
     container.runSaga {
-        val c = takeEvery { action -> action == Increment }
-        c
+        takeEvery({ action -> action == Increment }, { println("Launched from saga on Increment!")})
     }
 
     store.dispatch(Decrement)
@@ -38,4 +37,8 @@ fun main() {
     store.dispatch(Increment)
     store.dispatch(Increment)
     Thread.sleep(2000)
+
+    container.runSaga {
+        println("store state : ${store.getState()}\n saga state : ${container.select()}")
+    }
 }
