@@ -17,6 +17,8 @@ interface SagaRuntime<S, A> {
 
     suspend fun takeEvery(matcher: (A) -> Boolean, func: () -> Any)
 
+    suspend fun put(action: A): A
+
     fun select(): S
 }
 
@@ -28,12 +30,14 @@ class SagaContainer<S, A> : CoroutineScope, SagaRuntime<S, A> {
     override val coroutineContext = job + Dispatchers.Default
 
     private val actionChannel = BroadcastChannel<A>(300)
-    private lateinit var env: () -> S
+    private lateinit var getState: () -> S
+    private lateinit var dispatch: (A) -> Unit
 
     fun runSaga(saga: Saga<S, A>) = launch { saga() }
 
     fun createMiddleWare(): Middleware<S, A> = { store, action, next ->
-        env = store::getState
+        getState = store::getState
+        dispatch = { a: A -> store.dispatch(a)}
         next(action)
         launch {
             actionChannel.send(action)
@@ -65,7 +69,12 @@ class SagaContainer<S, A> : CoroutineScope, SagaRuntime<S, A> {
     }
 
     override fun select(): S {
-        return env()
+        return getState()
+    }
+
+    override suspend fun put(action:A): A {
+        dispatch(action)
+        return action
     }
 }
 

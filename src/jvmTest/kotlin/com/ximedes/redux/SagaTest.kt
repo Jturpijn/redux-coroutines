@@ -1,44 +1,39 @@
 package com.ximedes.redux
 
-fun main() {
-    val container = SagaContainer<CounterState, CounterAction>()
-    val store = applyMiddleware(ReducerStore(CounterReducer, CounterState()), container.createMiddleWare())
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 
-    container.runSaga {
-        while (true) {
-            println("Waiting for action")
-            val a = take()
-            println(
-                when (a) {
-                    is Increment -> "+1"
-                    is Decrement -> "-1"
-                }
-            )
+val container = SagaContainer<CounterState, CounterAction>()
+val sagaStore = applyMiddleware(ReducerStore(CounterReducer, CounterState()), container.createMiddleWare())
+
+class SagaTest {
+    @Test
+    fun `Selector test`() {
+        sagaStore.dispatch(Increment)
+        assertEquals(container.select(), sagaStore.getState())
+    }
+
+    @Test
+    fun `Put test`() {
+        assertEquals(container.select(), sagaStore.getState())
+        container.runSaga { assertEquals(Increment, put(Increment)) }
+        assertEquals(sagaStore.getState(), container.select())
+    }
+
+    @Nested
+    inner class TakeTests {
+        @Test
+        fun `Take test`() {
+
         }
     }
 
-    container.runSaga {
-        val b = take { action -> action == Increment }
-        println(
-            when (b) {
-                is Increment -> "Succesfully consumed Increment"
-                else -> "Failed"
-            }
-        )
-
-    }
-
-    container.runSaga {
-        takeEvery({ action -> action == Increment }, { println("Launched from saga on Increment!")})
-    }
-
-    store.dispatch(Decrement)
-    Thread.sleep(1000)
-    store.dispatch(Increment)
-    store.dispatch(Increment)
-    Thread.sleep(2000)
-
-    container.runSaga {
-        println("store state : ${store.getState()}\n saga state : ${container.select()}")
+    @Nested
+    inner class TakeEveryTests {
+        @Test
+        fun `TakeEvery test`() {
+            
+        }
     }
 }
