@@ -1,12 +1,8 @@
 package com.ximedes.redux
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.launch
 
 
 interface SagaRuntime<S, A> {
@@ -15,7 +11,7 @@ interface SagaRuntime<S, A> {
 
     suspend fun take(matcher: (A) -> Boolean): A
 
-    suspend fun takeEvery(matcher: (A) -> Boolean, func: () -> Any)
+    suspend fun takeEvery(matcher: (A) -> Boolean, saga: Saga<S, A>)
 
     suspend fun put(action: A): A
 
@@ -33,11 +29,13 @@ class SagaContainer<S, A> : CoroutineScope, SagaRuntime<S, A> {
     private lateinit var getState: () -> S
     private lateinit var dispatch: (A) -> Unit
 
-    fun runSaga(saga: Saga<S, A>) = launch { saga() }
+    // TODO nadenken of UNDISPATCHED een goed idee is...
+    fun runSaga(saga: Saga<S, A>) = launch(start = CoroutineStart.UNDISPATCHED) { saga() }
 
+    // TODO betere manier verzinnen om middleware te apply-en
     fun createMiddleWare(): Middleware<S, A> = { store, action, next ->
         getState = store::getState
-        dispatch = { a: A -> store.dispatch(a)}
+        dispatch = { a: A -> store.dispatch(a) }
         next(action)
         launch {
             actionChannel.send(action)
@@ -61,10 +59,12 @@ class SagaContainer<S, A> : CoroutineScope, SagaRuntime<S, A> {
         }
     }
 
-    override suspend fun takeEvery(matcher: (A) -> Boolean, func: () -> Any) {
+    override suspend fun takeEvery(matcher: (A) -> Boolean, saga: Saga<S, A>) {
         val receiveChannel = actionChannel.openSubscription()
         receiveChannel.consumeEach {
-            if (matcher(it)) func()
+            if (matcher(it)) {
+                runSaga(saga)
+            }
         }
     }
 
