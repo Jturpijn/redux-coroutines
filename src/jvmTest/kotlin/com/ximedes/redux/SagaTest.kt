@@ -7,24 +7,24 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.assertFalse
 
+const val sagaStartUpMillis: Long = 5
 
 class SagaTest {
-
     val container = SagaContainer<CounterState, CounterAction>()
     val sagaStore = applyMiddleware(ReducerStore(CounterReducer, CounterState()), container.createMiddleWare())
 
     @Test
     fun `actions are dispatched synchronously`() {
         sagaStore.dispatch(Increment)
-        // Now the state should be updated
-        assertEquals(container.select(), sagaStore.getState())
+        assertEquals(1, container.select().counter)
     }
 
     @Test
     fun `put call from saga dispatches action`() {
-        sagaStore.dispatch(Decrement)
-        val sagaJob = container.runSaga { assertEquals(Increment, put(Increment)) }
+        sagaStore.dispatch(Decrement) // initializes put() to store::dispatch
+        val sagaJob = container.runSaga { put(Increment) }
         runBlocking {
             sagaJob.join()
         }
@@ -33,29 +33,80 @@ class SagaTest {
 
     @Nested
     inner class TakeTests {
-        @Test
-        fun `Take test`() {
 
+        @Test
+        fun `take consumes first dispatched value`() {
+            var action: CounterAction = Decrement
+            container.runSaga { action = take() }
+            Thread.sleep(sagaStartUpMillis)
+            sagaStore.dispatch(Increment)
+            sagaStore.dispatch(Decrement)
+            Thread.sleep(sagaStartUpMillis)
+            assertEquals(Increment, action)
+        }
+
+        @Test
+        fun `take consumes specific value`() {
+            var action: CounterAction = Decrement
+            container.runSaga { action = take { action -> action === Increment} }
+            Thread.sleep(sagaStartUpMillis)
+            container.runSaga { sagaStore.dispatch(Decrement) ; sagaStore.dispatch(Increment) }
+            Thread.sleep(sagaStartUpMillis)
+            assertEquals(Increment, action)
         }
     }
 
     @Nested
     inner class TakeEveryTests {
-
         @Test
-        fun `TakeEvery test`() {
+        fun `TakeEvery consumes 3 dispatched actions`() {
             val latch = CountDownLatch(3)
+            val aList = mutableListOf<CounterAction>()
             container.runSaga {
                 takeEvery({ true }) {
+                    aList.add(it)
                     latch.countDown()
                 }
             }
-//            Thread.sleep(10)
+            Thread.sleep(5)
+            repeat (3) { sagaStore.dispatch(Increment) }
+            assertTrue(latch.await(100, TimeUnit.MILLISECONDS))
+        }
+
+        @Test
+        fun `TakeEvery consumes only Increments`() {
+            val latch = CountDownLatch(3)
+            val aList = mutableListOf<CounterAction>()
+            container.runSaga {
+                takeEvery({ action -> action == Increment }) {
+                    aList.add(it)
+                    latch.countDown()
+                }
+            }
+            Thread.sleep(sagaStartUpMillis)
+            repeat (3) { sagaStore.dispatch(Decrement) }
+            repeat (3) { sagaStore.dispatch(Increment) }
+            assertTrue(latch.await(100, TimeUnit.MILLISECONDS))
+            assertEquals(listOf<CounterAction>(Increment, Increment, Increment), aList)
+        }
+
+        @Test
+        fun `TakeEvery consumes ordered actions`() {
+            val latch = CountDownLatch(3)
+            val aList = mutableListOf<CounterAction>()
+            container.runSaga {
+                takeEvery({ true }) {
+                    aList.add(it)
+                    latch.countDown()
+                }
+            }
+            Thread.sleep(sagaStartUpMillis)
+
             sagaStore.dispatch(Increment)
-            sagaStore.dispatch(Increment)
+            sagaStore.dispatch(Decrement)
             sagaStore.dispatch(Increment)
             assertTrue(latch.await(100, TimeUnit.MILLISECONDS))
-
+            assertEquals(listOf(Increment, Decrement, Increment), aList)
         }
     }
 }

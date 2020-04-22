@@ -11,14 +11,15 @@ interface SagaRuntime<S, A> {
 
     suspend fun take(matcher: (A) -> Boolean): A
 
-    suspend fun takeEvery(matcher: (A) -> Boolean, saga: Saga<S, A>)
+    suspend fun takeEvery(matcher: (A) -> Boolean, saga: ActionSaga<S, A>)
 
-    suspend fun put(action: A): A
+    fun put(action: A)
 
     fun select(): S
 }
 
 typealias Saga<S, A> = suspend SagaRuntime<S, A>.() -> Unit
+typealias ActionSaga<S, A> = suspend SagaRuntime<S, A>.(action: A) -> Unit
 
 class SagaContainer<S, A> : CoroutineScope, SagaRuntime<S, A> {
 
@@ -59,11 +60,11 @@ class SagaContainer<S, A> : CoroutineScope, SagaRuntime<S, A> {
         }
     }
 
-    override suspend fun takeEvery(matcher: (A) -> Boolean, saga: Saga<S, A>) {
+    override suspend fun takeEvery(matcher: (A) -> Boolean, saga: ActionSaga<S, A>) {
         val receiveChannel = actionChannel.openSubscription()
         receiveChannel.consumeEach {
             if (matcher(it)) {
-                runSaga(saga)
+                launch(start = CoroutineStart.UNDISPATCHED) { saga(it) }
             }
         }
     }
@@ -72,9 +73,8 @@ class SagaContainer<S, A> : CoroutineScope, SagaRuntime<S, A> {
         return getState()
     }
 
-    override suspend fun put(action:A): A {
+    override fun put(action:A) {
         dispatch(action)
-        return action
     }
 }
 
