@@ -39,7 +39,7 @@ class SagaContainer<S, A> : CoroutineScope, SagaRuntime<S, A> {
         dispatch = { a: A -> store.dispatch(a) }
         next(action)
         launch {
-            actionChannel.send(action)
+            actionChannel.offer(action)
         }
     }
 
