@@ -26,12 +26,4 @@ class ReducerStore<S, A>(private val reducer: Reducer<S, A>, initialState: S) :
         currentState = reducer(currentState, action)
         listeners.forEach { it(currentState) }
     }
-    /*
-
-https://en.wikipedia.org/wiki/Double-checked_locking
-    1: Increment
-    2: Decrement
-
-     */
 }
-
