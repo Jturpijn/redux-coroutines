@@ -14,14 +14,18 @@ import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.jackson.jackson
+import io.ktor.request.receive
 import io.ktor.response.respond
-import io.ktor.routing.put
+import io.ktor.routing.post
+
+data class PostSetVisibilityFilter(val filter: VisibilityFilter)
+data class PostAddTodo(val text: String)
+data class PostToggleTodo(val id: Int)
 
 fun main() {
     val root = combineReducers(
         todoReducer,
-        visibilityFilterReducer,
-        counterReducer
+        visibilityFilterReducer
     )
     val store = ReducerStore(root, State())
 
@@ -36,8 +40,37 @@ fun main() {
             }
         }
         routing {
+            // basic functionalities for the To-do example
             get("/") {
                 call.respond(store.getState())
+            }
+            get("/todos") {
+                call.respond(store.getState().visibleTodos)
+            }
+            post("/setVisibilityFilter") {
+                val payload = call.receive<PostSetVisibilityFilter>()
+                store.dispatch(SetVisibilityFilter(payload.filter))
+                call.respond("VisibilityFilter has been updated to ${store.getState().visibilityFilter}")
+            }
+            post("/addTodo") {
+                val payload = call.receive<PostAddTodo>()
+                store.dispatch(AddTodo(payload.text))
+                call.respond("Successfully added todo to the list")
+            }
+            post("/toggleTodo") {
+                val payload = call.receive<PostToggleTodo>()
+                store.dispatch(ToggleTodo(payload.id))
+                call.respond("Successfully toggled todo")
+            }
+
+            // Some faker calls to insert some asynchronicity
+            get("/getTodos") {
+                val todos: List<Todo> = listOf(
+                    Todo("First Todo item", false, 0),
+                    Todo("Completed Todo item", true, 1),
+                    Todo("Third not so completed Todo item", false, 2)
+                )
+                call.respond(todos)
             }
             static("/static") {
                 resource("redux-coroutines.js")
