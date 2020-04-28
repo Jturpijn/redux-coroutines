@@ -40,6 +40,9 @@ kotlin {
         }
         jvmMain {
             dependencies {
+                implementation kotlin('stdlib-jdk8')
+                implementation("io.ktor:ktor-gson:$ktor_version")
+                implementation "io.ktor:ktor-jackson:$ktor_version"
                 implementation "io.ktor:ktor-server-netty:$ktor_version"
                 implementation "io.ktor:ktor-html-builder:$ktor_version"
                 implementation "ch.qos.logback:logback-classic:$logback_version"
@@ -73,7 +76,7 @@ jvmJar {
 
 task run(type: JavaExec, dependsOn: [jvmJar]) {
     group = "application"
-    main = "redux_coroutines.IndexJvmKt"
+    main = "com.ximedes.todo.MainKt"
     classpath(configurations.jvmRuntimeClasspath, jvmJar)
     args = []
 }

@@ -1,4 +1,4 @@
-package com.ximedes.redux
+package com.ximedes.todo
 
 /*
  * Actions for to-do example
