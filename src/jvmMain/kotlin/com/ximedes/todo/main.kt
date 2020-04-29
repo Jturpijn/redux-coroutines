@@ -3,7 +3,6 @@ package com.ximedes.todo
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
-import com.ximedes.redux.ReducerStore
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
@@ -13,19 +12,26 @@ import io.ktor.http.content.static
 import io.ktor.jackson.jackson
 import io.ktor.request.receive
 import io.ktor.response.respond
+import io.ktor.routing.delete
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 
-data class PostSetVisibilityFilter(val filter: VisibilityFilter)
-data class PostAddTodo(val text: String)
-data class PostToggleTodo(val id: Int)
+data class todoKey(val id: Int)
+data class addTodo(
+    val text: String
+)
+val MAX_TODOS = 20
+
+val todoMap = mutableMapOf(
+    0 to Todo("First Todo item", false, 0),
+    1 to Todo("Completed Todo item", true, 1),
+    2 to Todo("Third not so completed Todo item", false, 2)
+)
 
 fun main() {
-    val rootReducer = combineReducers(todoReducer, visibilityFilterReducer)
-    val store = ReducerStore(rootReducer, State())
 
     embeddedServer(Netty, port = 8080, host = "127.0.0.1") {
         install(ContentNegotiation) {
@@ -38,37 +44,51 @@ fun main() {
             }
         }
         routing {
-            // basic functionalities for the To-do example
-            get("/") {
-                call.respond(store.getState())
-            }
             get("/todos") {
-                call.respond(store.getState().visibleTodos)
+                call.respond(todoMap.values)
             }
-            post("/setVisibilityFilter") {
-                val payload = call.receive<PostSetVisibilityFilter>()
-                store.dispatch(SetVisibilityFilter(payload.filter))
-                call.respond("VisibilityFilter has been updated to ${store.getState().visibilityFilter}")
+            get("/todo") {
+                val payload = call.receive<todoKey>()
+                if (payload.id in todoMap.keys) {
+                    val todo = todoMap.getValue(payload.id)
+                    call.respond(todo)
+                } else {
+                    call.respond("Couldn't find ID")
+                }
             }
-            post("/addTodo") {
-                val payload = call.receive<PostAddTodo>()
-                store.dispatch(AddTodo(payload.text))
-                call.respond("Successfully added todo to the list")
+            post("/todo") {
+                val payload = call.receive<addTodo>()
+                for(i in 0..MAX_TODOS) {
+                    if(i !in todoMap.keys) {
+                        todoMap[i] = Todo(payload.text, false, i)
+                        call.respond("Successfully added new todo : ${payload.text}")
+                        break
+                    }
+                    if(i >= MAX_TODOS) {
+                        call.respond("You've reached your maximum of todo's. Delete some to make room for new todo's")
+                    }
+                }
             }
             post("/toggleTodo") {
-                val payload = call.receive<PostToggleTodo>()
-                store.dispatch(ToggleTodo(payload.id))
-                call.respond("Successfully toggled todo")
+                val payload = call.receive<todoKey>()
+                if(payload.id in todoMap.keys) {
+                    val oldTodo = todoMap.getValue(payload.id)
+                    val newTodo = Todo(oldTodo.text, oldTodo.completed.not(), oldTodo.id)
+                    todoMap.replace(payload.id, oldTodo, newTodo)
+                    call.respond("Succesfully toggled todo : ${newTodo.text}")
+                } else {
+                    call.respond("Couldn't find todo with id: ${payload.id}")
+                }
             }
-
-            // Some faker calls to insert some asynchronicity
-            get("/getTodos") {
-                val todos: List<Todo> = listOf(
-                    Todo("First Todo item", false, 0),
-                    Todo("Completed Todo item", true, 1),
-                    Todo("Third not so completed Todo item", false, 2)
-                )
-                call.respond(todos)
+            delete("/todo") {
+                val payload = call.receive<todoKey>()
+                if(payload.id in todoMap.keys) {
+                    val todo = todoMap.getValue(payload.id)
+                    todoMap.remove(payload.id)
+                    call.respond("Successfully removed todo: ${todo.text}")
+                } else {
+                    call.respond("Couldn't find todo with id: ${payload.id}")
+                }
             }
             static("/static") {
                 resource("redux-coroutines.js")
