@@ -2,7 +2,6 @@ package com.ximedes.todo
 
 
 import com.fasterxml.jackson.databind.*
-import com.ximedes.redux.ReducerStore
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
@@ -23,12 +22,6 @@ data class PostAddTodo(val text: String)
 data class PostToggleTodo(val id: Int)
 
 fun main() {
-    val root = combineReducers(
-        todoReducer,
-        visibilityFilterReducer
-    )
-    val store = ReducerStore(root, State())
-
     embeddedServer(Netty, port = 8080, host = "127.0.0.1") {
         install(ContentNegotiation) {
             gson {

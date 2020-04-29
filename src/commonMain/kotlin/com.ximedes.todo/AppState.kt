@@ -1,9 +1,6 @@
 package com.ximedes.todo
 
-typealias TReducer<State, A> = (State, A) -> State
-fun <State,Action> combineReducers(vararg reducers: TReducer<State, Action>) = { state: State, action: Action ->
-    reducers.fold(state, { s, reducer -> reducer(s, action) })
-}
+import com.ximedes.redux.ReducerStore
 
 data class State(
     val visibilityFilter: VisibilityFilter = VisibilityFilter.SHOW_ALL,
@@ -19,3 +16,6 @@ data class State(
         VisibilityFilter.SHOW_COMPLETED -> todos.filter { it.completed }
     }
 }
+
+val rootReducer = combineReducers(todoReducer, visibilityFilterReducer)
+val store = ReducerStore(rootReducer, State())

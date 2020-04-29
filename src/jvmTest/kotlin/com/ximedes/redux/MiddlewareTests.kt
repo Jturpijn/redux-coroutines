@@ -55,15 +55,15 @@ class MiddlewareTests {
             // Test list
             val middlewareIDList = mutableListOf<Int>()
             // Middleware that adds its ID to the list
-            val middlewareTest1: Middleware<CounterState, CounterAction> = { store, action, next ->
+            val middlewareTest1: Middleware<CounterState, CounterAction> = { _, action, next ->
                 middlewareIDList.add(1)
                 next(action)
             }
-            val middlewareTest2: Middleware<CounterState, CounterAction> = { store, action, next ->
+            val middlewareTest2: Middleware<CounterState, CounterAction> = { _, action, next ->
                 middlewareIDList.add(2)
                 next(action)
             }
-            val middlewareTest3: Middleware<CounterState, CounterAction> = { store, action, next ->
+            val middlewareTest3: Middleware<CounterState, CounterAction> = { _, action, next ->
                 middlewareIDList.add(3)
                 next(action)
             }
