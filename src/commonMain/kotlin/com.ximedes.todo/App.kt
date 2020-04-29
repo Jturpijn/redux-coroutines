@@ -9,8 +9,9 @@ import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.client.request.get
 
 fun runApp() {
+    val rootReducer = combineReducers(todoReducer, visibilityFilterReducer)
     val container = SagaContainer<State, Action>()
-    val mStore = applyMiddleware(ReducerStore(todoReducer, State()), container.createMiddleWare())
+    val mStore = applyMiddleware(ReducerStore(rootReducer, State()), container.createMiddleWare())
     val client = HttpClient() {
         install(JsonFeature) {
             serializer = KotlinxSerializer()

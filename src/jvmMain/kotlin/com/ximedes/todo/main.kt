@@ -1,27 +1,32 @@
 package com.ximedes.todo
 
 
-import com.fasterxml.jackson.databind.*
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.ximedes.redux.ReducerStore
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
 import io.ktor.gson.gson
 import io.ktor.http.content.resource
 import io.ktor.http.content.static
-import io.ktor.routing.get
-import io.ktor.routing.routing
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
 import io.ktor.jackson.jackson
 import io.ktor.request.receive
 import io.ktor.response.respond
+import io.ktor.routing.get
 import io.ktor.routing.post
+import io.ktor.routing.routing
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
 
 data class PostSetVisibilityFilter(val filter: VisibilityFilter)
 data class PostAddTodo(val text: String)
 data class PostToggleTodo(val id: Int)
 
 fun main() {
+    val rootReducer = combineReducers(todoReducer, visibilityFilterReducer)
+    val store = ReducerStore(rootReducer, State())
+
     embeddedServer(Netty, port = 8080, host = "127.0.0.1") {
         install(ContentNegotiation) {
             gson {

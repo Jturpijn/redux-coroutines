@@ -1,7 +1,5 @@
 package com.ximedes.todo
 
-import com.ximedes.redux.ReducerStore
-
 data class State(
     val visibilityFilter: VisibilityFilter = VisibilityFilter.SHOW_ALL,
     val todos: List<Todo> = listOf(),
@@ -17,5 +15,3 @@ data class State(
     }
 }
 
-val rootReducer = combineReducers(todoReducer, visibilityFilterReducer)
-val store = ReducerStore(rootReducer, State())
