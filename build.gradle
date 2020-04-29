@@ -49,6 +49,7 @@ kotlin {
                 implementation "io.ktor:ktor-html-builder:$ktor_version"
                 implementation "ch.qos.logback:logback-classic:$logback_version"
                 implementation("io.ktor:ktor-client-serialization-jvm:$ktor_version")
+                implementation("io.ktor:ktor-client-apache:$ktor_version")
 
             }
         }

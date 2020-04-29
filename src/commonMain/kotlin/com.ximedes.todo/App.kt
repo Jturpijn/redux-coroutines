@@ -7,17 +7,16 @@ import io.ktor.client.HttpClient
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.client.request.get
-import kotlinx.coroutines.delay
 
-val container = SagaContainer<State, Action>()
-val mStore = applyMiddleware(ReducerStore(todoReducer, State()), container.createMiddleWare())
-val client = HttpClient() {
-    install(JsonFeature) {
-        serializer = KotlinxSerializer()
+fun runApp() {
+    val container = SagaContainer<State, Action>()
+    val mStore = applyMiddleware(ReducerStore(todoReducer, State()), container.createMiddleWare())
+    val client = HttpClient() {
+        install(JsonFeature) {
+            serializer = KotlinxSerializer()
+        }
     }
-}
 
-suspend fun main() {
     println("Checking initial store ${mStore.getState()}")
     mStore.dispatch(AddTodo("Finish POC"))
     var todos = listOf<Todo>()
@@ -26,5 +25,4 @@ suspend fun main() {
         println(response)
     }
     println("Retrieving off site todos : ${todos}")
-    delay(4000)
 }
