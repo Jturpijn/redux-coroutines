@@ -20,19 +20,15 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 
 data class todoKey(val id: Int)
-data class addTodo(
-    val text: String
-)
+data class addTodo(val text: String)
 val MAX_TODOS = 20
-
-val todoMap = mutableMapOf(
-    0 to Todo("First Todo item", false, 0),
-    1 to Todo("Completed Todo item", true, 1),
-    2 to Todo("Third not so completed Todo item", false, 2)
+val todoMap = mutableMapOf<Int, Todo>(
+    0 to Todo("Your very first todo!", false, 0),
+    1 to Todo("Being cool.", true, 1),
+    2 to Todo("Afstuderen", false, 2)
 )
 
 fun main() {
-
     embeddedServer(Netty, port = 8080, host = "127.0.0.1") {
         install(ContentNegotiation) {
             gson {

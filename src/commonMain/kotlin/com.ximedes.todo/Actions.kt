@@ -5,11 +5,11 @@ import kotlinx.serialization.Serializable
 /*
  * Actions for to-do example
  */
-sealed class Action()
-class AddTodo(val text: String) : Action()
-object Increment : Action()
-class ToggleTodo(val index: Int) : Action()
-class SetVisibilityFilter(val filter: VisibilityFilter) : Action()
+sealed class Action {
+    data class AddTodo(val text: String) : Action()
+    data class ToggleTodo(val index: Int) : Action()
+    data class SetVisibilityFilter(val filter: VisibilityFilter) : Action()
+}
 
 /*
  * More data such as the custom To-do class and VisibilityFilter

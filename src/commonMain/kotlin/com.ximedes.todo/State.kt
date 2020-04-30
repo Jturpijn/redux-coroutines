@@ -2,8 +2,7 @@ package com.ximedes.todo
 
 data class State(
     val visibilityFilter: VisibilityFilter = VisibilityFilter.SHOW_ALL,
-    val todos: List<Todo> = listOf(),
-    val counter: Int = 0
+    val todos: List<Todo> = listOf()
 ){
     val visibleTodos: List<Todo>
         get() = getVisibleTodos(visibilityFilter)
