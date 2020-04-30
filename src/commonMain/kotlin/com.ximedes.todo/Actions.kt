@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 sealed class Action {
     data class AddTodo(val text: String) : Action()
     data class ToggleTodo(val index: Int) : Action()
+    data class RemoveTodo(val index: Int) : Action()
     data class SetVisibilityFilter(val filter: VisibilityFilter) : Action()
 }
 

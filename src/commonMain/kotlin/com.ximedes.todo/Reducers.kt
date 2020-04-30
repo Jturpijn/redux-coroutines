@@ -1,13 +1,12 @@
 package com.ximedes.todo
 
+import com.ximedes.todo.Action.*
+
 val todoReducer = { s: State, a: Action ->
     when (a) {
-        is Action.AddTodo -> State(s.visibilityFilter, s.todos + Todo(
-            a.text,
-            id = s.todos.size
-        )
-        )
-        is Action.ToggleTodo -> State(s.visibilityFilter, s.todos.mapIndexed { index, todo ->
+        is AddTodo -> State(s.visibilityFilter, s.todos.plusElement(Todo(a.text,id = s.todos.size)))
+        is RemoveTodo -> State(s.visibilityFilter, s.todos.minusElement(s.todos.single { it.id == a.index}))
+        is ToggleTodo -> State(s.visibilityFilter, s.todos.mapIndexed { index, todo ->
             if (index == a.index) {
                 todo.copy(completed = !todo.completed)
             } else {
@@ -20,7 +19,7 @@ val todoReducer = { s: State, a: Action ->
 
 val visibilityFilterReducer = { s: State, a: Action ->
     when (a) {
-        is Action.SetVisibilityFilter -> State(a.filter, s.todos)
+        is SetVisibilityFilter -> State(a.filter, s.todos)
         else -> State(s.visibilityFilter, s.todos)
     }
 }

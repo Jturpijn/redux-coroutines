@@ -1,20 +1,27 @@
 package com.ximedes.todo
 
 import java.lang.Exception
+import java.lang.StringBuilder
+import java.util.*
 
 val confirmResponses = arrayOf("y", "yes", "yea", "ok")
-val denyResponses = arrayOf("n", "no", "nah", "nope")
+//val denyResponses = arrayOf("n", "no", "nah", "nope")
 
 fun main() {
     val lib = runApp()
     val container = lib.first
     val store = lib.second
 
+    container.runSaga {
+        takeEvery({action -> action is Action.AddTodo }, {
+            println("*PING* A todo has been added.")
+        })
+    }
+    // Command Line Interface
     println("Welcome to the redux-coroutines CLI app, this is an interactive app as an introduction to redux-coroutines.")
     println("Please try typing 'help' to see the commands.")
-
     while (true) {
-        val text = readLine()
+        val text = readLine()!!
         if (text == "help") {
             printHelp()
         }
@@ -22,18 +29,33 @@ fun main() {
             println("Current state: ${store.getState()}")
         }
         else if (text == "todos") {
-            println("visible todos : ${store.getState().visibleTodos}")
+            println("visible todos : ")
+            printTodos(store.getState().visibleTodos)
+        }
+        else if (text == "toggleTodo") {
+            println("Please enter the ID of the todo you're trying to toggle.")
+            val index:Int = readLine()!!.toInt()
+            try {
+                println("Please confirm your toggle of todo: ${store.getState().todos[index]}")
+                if(confirm(readLine()!!)) {
+                    try {
+                        store.dispatch(Action.ToggleTodo(index))
+                        println("Successfully toggled todo: ${store.getState().todos[index]}")
+                    } catch (e: Exception) {
+                        println("Something went wrong: $e")
+                    }
+                }
+            } catch (e: Exception) {
+                println("Couldn't find a todo with that ID!")
+            }
         }
         else if (text == "addTodo") {
             while (true) {
                 println("Please enter the description of your todo")
                 val description = readLine()!!
-                if(description == "cancel") { break }
-
-                println("Please confirm your description (y/n): $text")
-                val confirm = readLine()
-
-                if (confirm in confirmResponses) {
+                if(description == "cancel") {println("Cancelled addTodo proces" ) ; break }
+                println("Please confirm your description (y/n): $description")
+                if (confirm(readLine()!!)) {
                     try {
                         val add: Action = Action.AddTodo(description)
                         store.dispatch(add)
@@ -47,21 +69,49 @@ fun main() {
                 }
             }
         }
+        else if (text == "removeTodo") {
+            println("Please enter the id of the todo you're trying to remove.")
+            val index:Int = readLine()!!.toInt()
+
+            try {
+                val todo = store.getState().todos[index]
+                println("Please confirm the deletion of todo: ${todo.text}")
+                if(confirm(readLine()!!)) {
+                    try {
+                        store.dispatch(Action.RemoveTodo(index))
+                        println("Successfully removed todo: ${todo.text}")
+                    } catch (e: Exception) {
+                        println("Something went wrong: $e")
+                    }
+                }
+            } catch (e: Exception) {
+                println("Couldn't find a todo with that ID!")
+            }
+        }
         else if (text == "exit") {
             break
-        } else {
+        }
+        else {
             println("Can't understand what you're trying to do. Try typing help for some tips.")
         }
     }
 }
 
+// Helper functions
+fun confirm(text: String): Boolean = text in confirmResponses
 fun printHelp() {
     println("+----------------------------------------------------------------+")
     println("|   command :  |       description :                             |")
     println("+--------------+-------------------------------------------------+")
     println("| getstate     |  shows the complete state                       |")
     println("| todos        |  shows the todos based on the visibilityFilter  |")
-    println("| addTodo      |  starts the process of adding a todo            |")
+    println("| addTodo      |  starts the process of adding   a todo          |")
     println("| toggleTodo   |  starts the process of toggling a todo          |")
+    println("| removeTodo   |  starts the process of removing a todo          |")
     println("+----------------------------------------------------------------+")
+}
+fun printTodos(todos: List<Todo>) {
+    for(todo in todos) {
+        println("| ${todo.id} | ${todo.completed} \t | ${todo.text} \t |")
+    }
 }

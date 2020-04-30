@@ -24,7 +24,7 @@ fun runApp(): Pair<SagaContainer<State, Action>, Store<State, Action>> {
     val container = SagaContainer<State, Action>()
     val store = applyMiddleware(ReducerStore(rootReducer, State()), container.createMiddleWare())
 
-    // inith
+    // init
     container.runSaga {
         val todos:List<Todo> = client.get("http://127.0.0.1:8080/todos")
         for(todo in todos) {
