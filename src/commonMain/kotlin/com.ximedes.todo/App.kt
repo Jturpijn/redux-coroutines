@@ -26,20 +26,18 @@ fun runApp(): Pair<SagaContainer<State, Action>, Store<State, Action>> {
     container.runSaga {
         val todos: List<Todo> = client.get("http://127.0.0.1:8080/todos")
         for (todo in todos) {
-            store.dispatch(Action.AddTodo(todo.text))
+            store.dispatch(AddTodo(todo.text))
             if (todo.completed) {
-                store.dispatch(Action.ToggleTodo(todo.id))
+                store.dispatch(ToggleTodo(todo.id))
             }
         }
     }
 
     container.runSaga {
         val json = defaultSerializer()
-        // wait for init to pass
-        delay(2000)
+        delay(1000)
         while (true) {
             takeEvery({ true }, {
-                println("An action has been performed: $it")
                 when (it) {
                     is AddTodo -> client.post("http://127.0.0.1:8080/todo") {
                         body = json.write(addTodo(it.text))
