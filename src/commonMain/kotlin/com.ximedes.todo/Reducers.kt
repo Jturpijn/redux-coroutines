@@ -4,7 +4,7 @@ import com.ximedes.todo.Action.*
 
 val todoReducer = { s: State, a: Action ->
     when (a) {
-        is AddTodo -> State(s.visibilityFilter, s.todos.plusElement(Todo(a.text, false, s.todos.size)))
+        is AddTodo -> State(s.visibilityFilter, s.todos.plusElement(addTodoWithLowestIdAvailable(s.todos, a.text)))
         is RemoveTodo -> State(s.visibilityFilter, s.todos.minusElement(s.todos.single { it.id == a.index }))
         is ToggleTodo -> State(s.visibilityFilter, s.todos.mapIndexed { index, todo ->
             if (index == a.index) {
