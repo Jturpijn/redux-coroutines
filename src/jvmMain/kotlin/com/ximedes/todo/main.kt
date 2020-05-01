@@ -19,8 +19,6 @@ import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 
-data class todoKey(val id: Int)
-data class addTodo(val text: String)
 val MAX_TODOS = 20
 val todoMap = mutableMapOf<Int, Todo>(
     0 to Todo("Your very first todo!", false, 0),

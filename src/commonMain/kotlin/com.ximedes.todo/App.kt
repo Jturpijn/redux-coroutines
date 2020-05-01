@@ -1,17 +1,15 @@
 package com.ximedes.todo
 
-import com.ximedes.redux.ReducerStore
-import com.ximedes.redux.SagaContainer
-import com.ximedes.redux.Store
-import com.ximedes.redux.applyMiddleware
+import com.ximedes.redux.*
+import com.ximedes.todo.Action.*
 import io.ktor.client.HttpClient
+import io.ktor.client.features.json.defaultSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
-import kotlinx.coroutines.GlobalScope
+import io.ktor.client.request.post
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlin.native.concurrent.ThreadLocal
 
 fun runApp(): Pair<SagaContainer<State, Action>, Store<State, Action>> {
     val client = HttpClient() {
@@ -26,10 +24,36 @@ fun runApp(): Pair<SagaContainer<State, Action>, Store<State, Action>> {
 
     // init
     container.runSaga {
-        val todos:List<Todo> = client.get("http://127.0.0.1:8080/todos")
-        for(todo in todos) {
+        val todos: List<Todo> = client.get("http://127.0.0.1:8080/todos")
+        for (todo in todos) {
             store.dispatch(Action.AddTodo(todo.text))
+            if (todo.completed) {
+                store.dispatch(Action.ToggleTodo(todo.id))
+            }
         }
+    }
+
+    container.runSaga {
+        val json = defaultSerializer()
+        // wait for init to pass
+        delay(2000)
+        while (true) {
+            takeEvery({ true }, {
+                println("An action has been performed: $it")
+                when (it) {
+                    is AddTodo -> client.post("http://127.0.0.1:8080/todo") {
+                        body = json.write(addTodo(it.text))
+                    }
+                    is ToggleTodo -> client.post("http://127.0.0.1:8080/toggleTodo") {
+                        body = json.write(todoKey(it.index))
+                    }
+                    is RemoveTodo -> client.delete("http://127.0.0.1:8080/todo") {
+                        body = json.write(todoKey(it.index))
+                    }
+                }
+            })
+        }
+
     }
 
     return Pair(container, store)
