@@ -10,6 +10,11 @@ sealed class Action {
     data class ToggleTodo(val index: Int) : Action()
     data class RemoveTodo(val index: Int) : Action()
     data class SetVisibilityFilter(val filter: VisibilityFilter) : Action()
+
+    // Command line Actions
+    data class CLIAddTodo(val text: String) : Action()
+    data class CLIToggleTodo(val index: Int) : Action()
+    data class CLIRemoveTodo(val index: Int) : Action()
 }
 
 /*

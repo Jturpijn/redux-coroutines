@@ -9,7 +9,9 @@ import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
-import kotlinx.coroutines.delay
+import io.ktor.http.cio.Response
+import kotlinx.coroutines.*
+import kotlin.coroutines.CoroutineContext
 
 fun runApp(): Pair<SagaContainer<State, Action>, Store<State, Action>> {
     val client = HttpClient() {
@@ -18,35 +20,53 @@ fun runApp(): Pair<SagaContainer<State, Action>, Store<State, Action>> {
         }
     }
 
+    // Whipe local todos and populate state with retrieved todos
+    GlobalScope.launch() {
+        runCatching {
+            client.get<List<Todo>>("http://127.0.0.1:8080/todos")
+        }.onSuccess {
+            State(todos = it)
+            println("this has been a success $it")
+        }.onFailure {
+            println("Retrieving the state has been unsuccessful.")
+        }
+    }
+
     val rootReducer = combineReducers(todoReducer, visibilityFilterReducer)
     val container = SagaContainer<State, Action>()
     val store = applyMiddleware(ReducerStore(rootReducer, State()), container.createMiddleWare())
 
-    // init
-    container.runSaga {
-        val todos: List<Todo> = client.get("http://127.0.0.1:8080/todos")
-        for (todo in todos) {
-            store.dispatch(AddTodo(todo.text))
-            if (todo.completed) {
-                store.dispatch(ToggleTodo(todo.id))
-            }
-        }
-    }
-
     container.runSaga {
         val json = defaultSerializer()
-        delay(1000)
         while (true) {
             takeEvery({ true }, {
                 when (it) {
-                    is AddTodo -> client.post("http://127.0.0.1:8080/todo") {
-                        body = json.write(addTodo(it.text))
+                    is CLIAddTodo -> try {
+                        val response = client.post<Todo>("http://127.0.0.1:8080/todo") {
+                            body = json.write(addTodo(it.text))
+                        }
+                        store.dispatch(AddTodo(response.text))
+                    } catch (e: Exception) {
+                        println("Something went wrong sending the action: $e")
+                        println("Todo has not been added.")
                     }
-                    is ToggleTodo -> client.post("http://127.0.0.1:8080/toggleTodo") {
+                    is CLIToggleTodo ->  try {
+                        val response = client.post<Todo>("http://127.0.0.1:8080/toggleTodo") {
                         body = json.write(todoKey(it.index))
                     }
-                    is RemoveTodo -> client.delete("http://127.0.0.1:8080/todo") {
-                        body = json.write(todoKey(it.index))
+                        store.dispatch(ToggleTodo(response.id))
+                    } catch (e: Exception) {
+                        println("Something went wrong sending the action: $e")
+                        println("Todo has not been toggled.")
+                    }
+                    is CLIRemoveTodo -> try {
+                        val response = client.post<Todo>("http://127.0.0.1:8080/removeTodo") {
+                            body = json.write(todoKey(it.index))
+                        }
+                        store.dispatch(RemoveTodo(response.id))
+                    } catch (e: Exception) {
+                        println("Something went wrong sending the action: $e")
+                        println("Todo has not been removed.")
                     }
                 }
             })
