@@ -6,6 +6,9 @@ import kotlinx.serialization.Serializable
  * Actions for to-do example
  */
 sealed class Action {
+    data class SyncState(val todos: List<Todo>) : Action()
+
+    // Redux actions
     data class AddTodo(val text: String) : Action()
     data class ToggleTodo(val index: Int) : Action()
     data class RemoveTodo(val index: Int) : Action()

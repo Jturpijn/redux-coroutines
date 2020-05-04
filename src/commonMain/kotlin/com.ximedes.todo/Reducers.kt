@@ -13,6 +13,7 @@ val todoReducer = { s: State, a: Action ->
                 todo
             }
         })
+        is SyncState -> State(todos = a.todos)
         else -> State(s.visibilityFilter, s.todos)
     }
 }
