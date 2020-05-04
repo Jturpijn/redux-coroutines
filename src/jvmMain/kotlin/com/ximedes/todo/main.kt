@@ -12,6 +12,7 @@ import io.ktor.http.content.static
 import io.ktor.jackson.jackson
 import io.ktor.request.receive
 import io.ktor.response.respond
+import io.ktor.response.respondText
 import io.ktor.routing.delete
 import io.ktor.routing.get
 import io.ktor.routing.post
@@ -55,7 +56,7 @@ fun main() {
                 for(i in 0..MAX_TODOS) {
                     if(i !in todoMap.keys) {
                         todoMap[i] = Todo(payload.text, false, i)
-                        call.respond("Successfully added new todo : ${payload.text}")
+                        call.respondText(payload.text)
                         break
                     }
                     if(i >= MAX_TODOS) {
@@ -69,7 +70,7 @@ fun main() {
                     val oldTodo = todoMap.getValue(payload.id)
                     val newTodo = Todo(oldTodo.text, oldTodo.completed.not(), oldTodo.id)
                     todoMap.replace(payload.id, oldTodo, newTodo)
-                    call.respond("Succesfully toggled todo : ${newTodo.text}")
+                    call.respond(newTodo.id)
                 } else {
                     call.respond("Couldn't find todo with id: ${payload.id}")
                 }
@@ -79,7 +80,7 @@ fun main() {
                 if(payload.id in todoMap.keys) {
                     val todo = todoMap.getValue(payload.id)
                     todoMap.remove(payload.id)
-                    call.respond("Successfully removed todo: ${todo.text}")
+                    call.respond(todo.id)
                 } else {
                     call.respond("Couldn't find todo with id: ${payload.id}")
                 }
