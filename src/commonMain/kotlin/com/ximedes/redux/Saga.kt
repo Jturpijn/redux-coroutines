@@ -14,7 +14,7 @@ interface SagaRuntime<S, A> {
     suspend fun takeEvery(matcher: (A) -> Boolean, saga: ActionSaga<S, A>)
 
     fun put(action: A)
-
+    
     fun select(): S
 }
 

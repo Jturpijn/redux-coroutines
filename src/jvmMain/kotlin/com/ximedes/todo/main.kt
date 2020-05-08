@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
-import io.ktor.gson.gson
+import io.ktor.html.respondHtmlTemplate
 import io.ktor.http.content.resource
 import io.ktor.http.content.static
 import io.ktor.jackson.jackson
@@ -30,15 +30,15 @@ val todoMap = mutableMapOf<Int, Todo>(
 fun main() {
     embeddedServer(Netty, port = 8080, host = "127.0.0.1") {
         install(ContentNegotiation) {
-            gson {
-                setPrettyPrinting()
-            }
             jackson {
                 enable(SerializationFeature.INDENT_OUTPUT)
                 enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             }
         }
         routing {
+            get("/") {
+                call.respondHtmlTemplate(WorkshopPage()) {}
+            }
             get("/todos") {
                 call.respond(todoMap.values)
             }

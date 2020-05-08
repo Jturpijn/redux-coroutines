@@ -14,10 +14,10 @@ sealed class Action {
     data class RemoveTodo(val index: Int) : Action()
     data class SetVisibilityFilter(val filter: VisibilityFilter) : Action()
 
-    // Command line Actions
-    data class CLIAddTodo(val text: String) : Action()
-    data class CLIToggleTodo(val index: Int) : Action()
-    data class CLIRemoveTodo(val index: Int) : Action()
+    // Client Actions
+    data class RequestAddTodo(val text: String) : Action()
+    data class RequestToggleTodo(val index: Int) : Action()
+    data class RequestRemoveTodo(val index: Int) : Action()
 }
 
 /*

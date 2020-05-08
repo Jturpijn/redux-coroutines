@@ -6,14 +6,9 @@ import io.ktor.client.HttpClient
 import io.ktor.client.features.json.defaultSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
-import io.ktor.client.request.accept
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
-import io.ktor.http.ContentType
-import io.ktor.http.cio.Response
-import kotlinx.coroutines.*
-import kotlin.coroutines.CoroutineContext
 
 fun runApp(): Pair<SagaContainer<State, Action>, Store<State, Action>> {
     val client = HttpClient() {
@@ -27,7 +22,7 @@ fun runApp(): Pair<SagaContainer<State, Action>, Store<State, Action>> {
     val store = applyMiddleware(ReducerStore(rootReducer, State()), container.createMiddleWare())
 
     // Whipe local todos and populate state with retrieved todos
-    GlobalScope.launch() {
+    container.runSaga {
         runCatching {
             client.get<List<Todo>>("http://127.0.0.1:8080/todos")
         }.onSuccess {
@@ -42,7 +37,7 @@ fun runApp(): Pair<SagaContainer<State, Action>, Store<State, Action>> {
         while (true) {
             takeEvery({ true }, {
                 when (it) {
-                    is CLIAddTodo -> runCatching {
+                    is RequestAddTodo -> runCatching {
                         client.post<String>("http://127.0.0.1:8080/todo") {
                             body = json.write(addTodo(it.text))
                         }
@@ -52,7 +47,7 @@ fun runApp(): Pair<SagaContainer<State, Action>, Store<State, Action>> {
                         println("Something went wrong sending the action: ${it.message}")
                         println("Todo has not been added.")
                     }
-                    is CLIToggleTodo -> runCatching {
+                    is RequestToggleTodo -> runCatching {
                         client.post<Int>("http://127.0.0.1:8080/toggleTodo") {
                             body = json.write(todoKey(it.index))
                         }
@@ -63,7 +58,7 @@ fun runApp(): Pair<SagaContainer<State, Action>, Store<State, Action>> {
                         println("Something went wrong sending the action: $it")
                         println("Todo has not been toggled.")
                     }
-                    is CLIRemoveTodo -> runCatching {
+                    is RequestRemoveTodo -> runCatching {
                         client.delete<Int>("http://127.0.0.1:8080/todo") {
                             body = json.write(todoKey(it.index))
                         }

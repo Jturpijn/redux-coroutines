@@ -30,7 +30,7 @@ fun main() {
                     println("Please confirm your description (y/n): $description")
                     if (confirm(readLine()!!)) {
                         try {
-                            store.dispatch(CLIAddTodo(description))
+                            store.dispatch(RequestAddTodo(description))
                             println("Successfully added todo: $description")
                             break
                         } catch (e: Exception) {
@@ -48,7 +48,7 @@ fun main() {
                     println("Please confirm your toggle of todo: ${store.getState().todos[index]}")
                     if(confirm(readLine()!!)) {
                         try {
-                            store.dispatch(CLIToggleTodo(index))
+                            store.dispatch(RequestToggleTodo(index))
                             println("Successfully toggled todo: ${store.getState().todos[index]}")
                         } catch (e: Exception) {
                             println("Something went wrong: $e")
@@ -67,7 +67,7 @@ fun main() {
                     println("Please confirm the deletion of todo: ${todo.text}")
                     if(confirm(readLine()!!)) {
                         try {
-                            store.dispatch(CLIRemoveTodo(index))
+                            store.dispatch(RequestRemoveTodo(index))
                             println("Successfully removed todo: ${todo.text}")
                         } catch (e: Exception) {
                             println("Something went wrong: $e")
