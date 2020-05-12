@@ -1,10 +1,13 @@
 package com.ximedes.todo
 
-import com.ximedes.redux.*
+import com.ximedes.redux.ReducerStore
+import com.ximedes.redux.SagaContainer
+import com.ximedes.redux.Store
+import com.ximedes.redux.applyMiddleware
 import com.ximedes.todo.Action.*
 import io.ktor.client.HttpClient
-import io.ktor.client.features.json.defaultSerializer
 import io.ktor.client.features.json.JsonFeature
+import io.ktor.client.features.json.defaultSerializer
 import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -34,45 +37,42 @@ fun runApp(): Pair<SagaContainer<State, Action>, Store<State, Action>> {
 
     container.runSaga {
         val json = defaultSerializer()
-        while (true) {
-            takeEvery({ true }, {
-                when (it) {
-                    is RequestAddTodo -> runCatching {
-                        client.post<String>("http://127.0.0.1:8080/todo") {
-                            body = json.write(addTodo(it.text))
-                        }
-                    }.onSuccess {
-                        store.dispatch(AddTodo(it))
-                    }.onFailure {
-                        println("Something went wrong sending the action: ${it.message}")
-                        println("Todo has not been added.")
+        takeEvery({ true }, {
+            when (it) {
+                is RequestAddTodo -> runCatching {
+                    client.post<String>("http://127.0.0.1:8080/todo") {
+                        body = json.write(addTodo(it.text))
                     }
-                    is RequestToggleTodo -> runCatching {
-                        client.post<Int>("http://127.0.0.1:8080/toggleTodo") {
-                            body = json.write(todoKey(it.index))
-                        }
-                    }.onSuccess {
-                        val id:Int = it
-                        store.dispatch(ToggleTodo(id))
-                    }.onFailure {
-                        println("Something went wrong sending the action: $it")
-                        println("Todo has not been toggled.")
-                    }
-                    is RequestRemoveTodo -> runCatching {
-                        client.delete<Int>("http://127.0.0.1:8080/todo") {
-                            body = json.write(todoKey(it.index))
-                        }
-                    }.onSuccess {
-                        val id:Int = it
-                        store.dispatch(RemoveTodo(id))
-                    }.onFailure {
-                        println("Something went wrong sending the action: $it")
-                        println("Todo has not been removed.")
-                    }
+                }.onSuccess {
+                    store.dispatch(AddTodo(it))
+                }.onFailure {
+                    println("Something went wrong sending the action: ${it.message}")
+                    println("Todo has not been added.")
                 }
-            })
-        }
-
+                is RequestToggleTodo -> runCatching {
+                    client.post<Int>("http://127.0.0.1:8080/toggleTodo") {
+                        body = json.write(todoKey(it.index))
+                    }
+                }.onSuccess {
+                    val id: Int = it
+                    store.dispatch(ToggleTodo(id))
+                }.onFailure {
+                    println("Something went wrong sending the action: $it")
+                    println("Todo has not been toggled.")
+                }
+                is RequestRemoveTodo -> runCatching {
+                    client.delete<Int>("http://127.0.0.1:8080/todo") {
+                        body = json.write(todoKey(it.index))
+                    }
+                }.onSuccess {
+                    val id: Int = it
+                    store.dispatch(RemoveTodo(id))
+                }.onFailure {
+                    println("Something went wrong sending the action: $it")
+                    println("Todo has not been removed.")
+                }
+            }
+        })
     }
 
     return Pair(container, store)
