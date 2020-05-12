@@ -11,7 +11,7 @@ interface SagaRuntime<S, A> {
 
     suspend fun take(matcher: (A) -> Boolean): A
 
-    suspend fun takeEvery(matcher: (A) -> Boolean, saga: ActionSaga<S, A>)
+    fun takeEvery(matcher: (A) -> Boolean, saga: ActionSaga<S, A>)
 
     fun put(action: A)
 
@@ -60,7 +60,7 @@ class SagaContainer<S, A> : CoroutineScope, SagaRuntime<S, A> {
         }
     }
 
-    override suspend fun takeEvery(matcher: (A) -> Boolean, saga: ActionSaga<S, A>) {
+    override fun takeEvery(matcher: (A) -> Boolean, saga: ActionSaga<S, A>) {
         val receiveChannel = actionChannel.openSubscription()
         launch {
             receiveChannel.consumeEach {
